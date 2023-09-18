@@ -1,5 +1,6 @@
 # MiSide-AssetLoader
 Firstly planned as a simple mod, very fast turned into a universal asset loader for any Unity game. You can use it as a reference for your own projects.
+Tested on MiSide Demo 1.17f.
 
 ### Features:
  - Standard-like Unity methods which implemented through reflection
