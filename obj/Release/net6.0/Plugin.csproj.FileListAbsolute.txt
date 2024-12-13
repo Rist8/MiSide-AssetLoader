@@ -1,0 +1,12 @@
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\bin\Release\net6.0\Plugin.deps.json
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\bin\Release\net6.0\Plugin.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\bin\Release\net6.0\Plugin.pdb
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.csproj.AssemblyReference.cache
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.csproj.CoreCompileInputs.cache
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\refint\Plugin.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.pdb
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\ref\Plugin.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.AssemblyInfoInputs.cache
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\Plugin.AssemblyInfo.cs

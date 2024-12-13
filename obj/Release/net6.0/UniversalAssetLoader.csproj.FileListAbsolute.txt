@@ -1,0 +1,12 @@
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\bin\Release\net6.0\UniversalAssetLoader.deps.json
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\bin\Release\net6.0\UniversalAssetLoader.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\bin\Release\net6.0\UniversalAssetLoader.pdb
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.csproj.AssemblyReference.cache
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.AssemblyInfoInputs.cache
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.AssemblyInfo.cs
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.csproj.CoreCompileInputs.cache
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\refint\UniversalAssetLoader.dll
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\UniversalAssetLoader.pdb
+C:\Users\Михаил\Downloads\MiSide-AssetLoader-main\Plugin\obj\Release\net6.0\ref\UniversalAssetLoader.dll
