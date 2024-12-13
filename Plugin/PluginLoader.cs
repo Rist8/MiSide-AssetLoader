@@ -13,7 +13,7 @@ public static class PluginInfo
 	public static string AssetsFolder = Paths.PluginPath + "\\" + PluginInfo.PLUGIN_GUID + "\\Assets";
 }
 
-[BepInPlugin("org.miside.plugins.presentdaypresenttime", PluginInfo.PLUGIN_NAME, "1.1.0")]
+[BepInPlugin("org.miside.plugins.assetloader", PluginInfo.PLUGIN_NAME, "1.1.0")]
 public class PluginLoader : BasePlugin
 {
 	public ManualLogSource Logger { get; private set; }

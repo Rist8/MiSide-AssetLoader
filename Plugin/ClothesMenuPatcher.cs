@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Net;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppSystem.Drawing;
 using UnityEngine;
@@ -6,187 +7,15 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class ClothesMenuPatcher{
-    public static void Run(GameObject mita){
-        try{
-            CreateMenuTab();
-        } catch (Exception e){
-            UnityEngine.Debug.LogError("Error while creating menu tab\n" + e.GetType().Name + ": " + e.Message + "\n" + e.StackTrace);
-        }
-        if (GlobalGame.clothMita != "original" && GlobalGame.clothMita != "FIIdClSchool")
+    public static void Run()
+    {
+        try
         {
-            GlobalGame.clothMita = "original";
-            GlobalGame.clothVariantMita = 0;
-            Reflection.FindObjectsOfType<MenuClothes>()[0].indexOpenNow = 0;
+            CreateMenuTab();
         }
-        MitaClothesResource clothes = 
-            Reflection.FindObjectsOfType<MenuClothes>()[0].resourceClothes.GetComponent<MitaClothesResource>();
-        Dictionary<string, DataClothMita> clothesDict = new Dictionary<string, DataClothMita>();
-
-        foreach (var cloth in clothes.clothes)
-            clothesDict[cloth.fileSave] = cloth;
-
-        var folderPath = PluginInfo.AssetsFolder;
-        var directories = Directory.GetDirectories(folderPath);
-        var archives = Directory.GetFiles(folderPath, "*.zip");
-
-        foreach (var directory in directories.Concat(archives)){
-            try{
-                Dictionary<string, Assimp.Mesh[]> loadedModels = new Dictionary<string, Assimp.Mesh[]>();
-	            Dictionary<string, Texture2D> loadedTextures = new Dictionary<string, Texture2D>();
-
-                string configText;
-                if (directory.EndsWith(".zip")){
-                    using (FileStream zipToOpen = new FileStream(directory, FileMode.Open))
-                    using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Read)){
-                        ZipArchiveEntry config = archive.GetEntry("config.txt");
-                        if (config == null) continue;
-                        using (StreamReader reader = new StreamReader(config.Open()))
-                            configText = reader.ReadToEnd();
-
-                        foreach (var file in archive.Entries){
-                            if (file.Name.EndsWith(".jpg") || file.Name.EndsWith(".jpeg") || file.Name.EndsWith(".png")){
-                                var texture = AssetLoader.LoadTexture(Path.GetFileNameWithoutExtension(file.Name), file.Open());
-                                loadedTextures[texture.name] = texture;
-                            }
-                            else if (file.Name.EndsWith(".fbx")){
-                                var models = AssetLoader.LoadFBX(file.Open());
-                                loadedModels[Path.GetFileNameWithoutExtension(file.Name)] = models;
-                            }
-                        }
-                    }
-                }
-                else{
-                    var configPath = Path.Combine(directory, "config.txt");
-                    if (!File.Exists(configPath)) continue;
-                    configText = File.ReadAllText(configPath);
-
-                    foreach (var file in AssetLoader.GetAllFilesWithExtensions(directory, "png", "jpg", "jpeg")){
-                        var texture = AssetLoader.LoadTexture(file);
-                        loadedTextures[texture.name] = texture;
-                    }
-                    foreach (var file in AssetLoader.GetAllFilesWithExtensions(directory, "fbx")){
-                        var models = AssetLoader.LoadFBX(file);
-                        loadedModels[Path.GetFileNameWithoutExtension(file)] = models;
-                    }
-                }
-
-                var configData = AssetLoader.ParseYAML(configText);
-                var clothName = configData["name"].ToString();
-                DataClothMita cloth = null;
-                if (clothesDict.ContainsKey(clothName))
-                    cloth = clothesDict[clothName];
-                else{
-                    cloth = new DataClothMita();
-                    cloth.isMod = true;
-                    cloth.modNameCloth = clothName;
-                    cloth.fileSave = clothName;
-                    clothesDict[cloth.fileSave] = cloth;
-                    clothes.clothes.Add(cloth);
-                }
-
-                foreach (var key in configData.Keys){
-                    if (key == "name") continue;
-                    if (key == "variants"){
-                        var variants = configData[key] as List<object>;
-                        var newVariantsList = cloth.variants != null ?
-                            new List<DataClothMitaVariant>(cloth.variants) :
-                            new List<DataClothMitaVariant>();
-                        foreach (var _item in variants){
-                            var newVariant = CreateClothVariant();
-                            var variantData = _item as Dictionary<string, object>;
-                            foreach (var vkey in variantData.Keys){
-                                if (vkey.Contains("color")){
-                                    UnityEngine.Color color = UnityEngine.Color.white;
-                                    ColorUtility.TryParseHtmlString(variantData[vkey].ToString(), out color);
-                                    newVariant.GetType().GetProperty(vkey).SetValue(newVariant, color);
-                                    continue;
-                                }
-                                
-                                if (vkey.Contains("Textures")){
-                                    var texturesList = new List<Texture2D>();
-                                    if (variantData[vkey] is string)
-                                        variantData[vkey] = new List<object>(new object[]{ variantData[vkey] });
-                                    foreach (var configTextures in variantData[vkey] as List<object>){
-                                        var textureKey = (configTextures as Dictionary<string, object>).Keys.First();
-                                        if (textureKey.StartsWith('*'))
-                                            texturesList.Add(GetTextureFromCloth(textureKey, vkey, texturesList.Count));
-                                        else
-                                            texturesList.Add(loadedTextures[textureKey]);
-                                    }
-                                    newVariant.GetType().GetProperty(vkey).SetValue(newVariant, (Il2CppReferenceArray<Texture2D>) texturesList.ToArray());
-                                }
-                            }
-                            newVariantsList.Add(newVariant);
-                        }
-                        cloth.variants = newVariantsList.ToArray();
-                        continue;
-                    }
-                    if (key.Contains("color")){
-                        UnityEngine.Color color = UnityEngine.Color.white;
-                        ColorUtility.TryParseHtmlString(configData[key].ToString(), out color);
-                        cloth.GetType().GetProperty(key).SetValue(cloth, color);
-                        continue;
-                    }
-                    if (key.Contains("Mesh")){
-                        Mesh mesh;
-                        if (configData[key] == null)
-                            mesh = new Mesh();
-                        else if (configData[key].ToString().StartsWith('*'))
-                            mesh = GetMeshFromCloth(configData[key].ToString(), key);
-                        else{
-                            string[] parts = configData[key].ToString().Split('#');
-                            var sourceMesh = loadedModels[parts[0]].First(mesh => mesh.Name == parts[1]);
-                            mesh = AssetLoader.BuildMesh(sourceMesh, new AssetLoader.ArmatureData(mita));
-                        }
-                        cloth.GetType().GetProperty(key).SetValue(cloth, mesh);
-                    }
-                }
-                Debug.Log("Successfully loaded " + directory);
-            }
-            catch (Exception e){
-                UnityEngine.Debug.LogError("Error while parsing " + directory + "\n" + e.GetType().Name + ": " + e.Message + "\n" + e.StackTrace);
-            }
-        }
-
-        DataClothMitaVariant CreateClothVariant(){
-            DataClothMitaVariant result = new DataClothMitaVariant();
-            DataClothMitaVariant source = clothesDict["original"].variants[0];
-            result.bodyTextures = source.bodyTextures;
-            result.bodyMaterials = source.bodyMaterials;
-            result.bodyMaterialsDX9 = source.bodyMaterialsDX9;
-            result.attributeTextures = source.attributeTextures;
-            result.attributeMaterials = source.attributeMaterials;
-            result.attributeMaterialsDX9 = source.attributeMaterialsDX9;
-            result.pantyhoseTextures = source.pantyhoseTextures;
-            result.pantyhoseMaterials = source.pantyhoseMaterials;
-            result.pantyhoseMaterialsDX9 = source.pantyhoseMaterialsDX9;
-            result.shoesTextures = source.shoesTextures;
-            result.shoesMaterials = source.shoesMaterials;
-            result.shoesMaterialsDX9 = source.shoesMaterialsDX9;
-            result.skirtTextures = source.skirtTextures;
-            result.skirtMaterials = source.skirtMaterials;
-            result.skirtMaterialsDX9 = source.skirtMaterialsDX9;
-            result.sweaterTextures = source.sweaterTextures;
-            result.sweaterMaterials = source.sweaterMaterials;
-            result.sweaterMaterialsDX9 = source.sweaterMaterialsDX9;
-            return result;
-        }
-
-        Texture2D GetTextureFromCloth(string name, string slot, int texIndex){
-            name = name.Substring(1);
-            int variantIndex = 0;
-            if (name.Contains('#')){
-                variantIndex = int.Parse(name.Split("#")[1]) - 1;
-                name = name.Split("#")[0];
-            }
-            var variant = clothesDict[name].variants[variantIndex];
-            return (variant.GetType().GetProperty(slot).GetValue(variant) as Il2CppReferenceArray<Texture2D>)[texIndex];
-        }
-
-        Mesh GetMeshFromCloth(string name, string slot){
-            name = name.Substring(1);
-            var cloth = clothesDict[name];
-            return cloth.GetType().GetProperty(slot).GetValue(cloth) as Mesh;
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError("Error while creating menu tab\n" + e.GetType().Name + ": " + e.Message + "\n" + e.StackTrace);
         }
     }
 
@@ -296,10 +125,15 @@ public class ClothesMenuPatcher{
         ml.objects.Clear();
         ml.objects.Add(tabs.GetComponent<RectTransform>());
     }
-    static void LogOnClick(string name){
-        Debug.Log("clicked: " +  name);
-        bool active = !addonButtons[name].GetComponent<RectTransform>().Find("Text").GetComponent<Text>().text.EndsWith("(*)");
-        addonButtons[name].GetComponent<RectTransform>().Find("Text").GetComponent<Text>().text = name + ((!active) ? "" : "(*)");
+    public static void LogOnClick(string name){
+        bool active = !Plugin.Active[name];
+        if (Plugin.currentSceneName == "SceneMenu")
+        {
+            Debug.Log("clicked: " + name);
+            addonButtons[name].GetComponent<RectTransform>().Find("Text").GetComponent<Text>().text = name + ((!active) ? "" : "(*)");
+        }
+        Debug.Log(name + " is active:" + active);
+        Plugin.Active[name] = active;
         string filePath = PluginInfo.AssetsFolder + "/addons_config.txt";
         try{
             using (StreamReader sr = new StreamReader(filePath)){
@@ -313,6 +147,30 @@ public class ClothesMenuPatcher{
                         continue;
                     }
                     if (currentName == name){
+                        if (line == "trailer") {
+                            if (!active)
+                                GlobalGame.trailer = false;
+                            else
+                                GlobalGame.trailer = true;
+                            continue;
+                        }
+                        if (line == "halloween"){
+                            if (!active)
+                                GlobalGame.halloween = false;
+                            else
+                                GlobalGame.halloween = true;
+                            continue;
+                        }if (line == "christmas"){
+                            if (!active)
+                                GlobalGame.christmas = false;
+                            else
+                                GlobalGame.christmas = true;
+                            continue;
+                        }
+                        if (line.StartsWith("$")){
+                            Plugin.ConsoleEnter(line.Substring(1));
+                            continue;
+                        }
                         if (!active){
                             if (!line.StartsWith("-")){
                                 string[] parts1 = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -355,10 +213,18 @@ public class ClothesMenuPatcher{
 
                     string line1 = line.Substring(1);
                     button.onClick.AddListener((UnityAction)(() => { LogOnClick(line1); }));
+                    if(!Plugin.Active.ContainsKey(line1))
+                        Plugin.Active.Add(line1, false);
+                    if (line1 == "TrailerMode")
+                        Plugin.Active[line1] = GlobalGame.trailer;
+                    if (line1 == "Halloween")
+                        Plugin.Active[line1] = GlobalGame.halloween;
+                    if (line1 == "Christmas")
+                        Plugin.Active[line1] = GlobalGame.christmas;
 
                     var rect = addonButtons[line.Substring(1)].GetComponent<RectTransform>();
                     rect.anchoredPosition3D += new Vector3(0, 40 * (addonButtons.Count - 1), 0);
-                    addonButtons[line.Substring(1)].GetComponent<RectTransform>().Find("Text").GetComponent<UnityEngine.UI.Text>().text = line.Substring(1);
+                    addonButtons[line.Substring(1)].GetComponent<RectTransform>().Find("Text").GetComponent<UnityEngine.UI.Text>().text = line.Substring(1) + ((!Plugin.Active[line1]) ? "" : "(*)");
                 }
             }
         }
